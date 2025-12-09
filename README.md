@@ -82,27 +82,28 @@ This project satisfies 100% of the original technical assessment requirements:
 2. Create an API Key (using JWT)
     ```
     curl -X POST http://localhost:8000/keys/create \
-  -H "Authorization: Bearer <your-jwt>" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"test-service","permissions":["deposit","transfer","read"],"expiry":"1D"}'
-  ```
+    -H "Authorization: Bearer <your-jwt>" \
+    -H "Content-Type: application/json" \
+    -d '{"name":"test-service","permissions":["deposit","transfer","read"],"expiry":"1D"}'
+    ```
 3. Initialize Deposit (with API key)
     ```
     curl -X POST http://localhost:8000/wallet/deposit \
-  -H "x-api-key: sk_live_..." \
-  -H "Content-Type: application/json" \
-  -d '{"amount": 5000}'
-  ```
+    -H "x-api-key: sk_live_..." \
+    -H "Content-Type: application/json" \
+    -d '{"amount": 5000}'
+    ```
 4. Paystack Webhook (Test it)
     Use Paystack dashboard or ngrok:
     ```
     ngrok http 8000
-    # Then set webhook URL in Paystack dashboard to:
-    # https://your-ngrok-url.ngrok.io/wallet/paystack/webhook
     ```
+    - Then set webhook URL in Paystack dashboard to:
+    `https://your-ngrok-url.ngrok.io/wallet/paystack/webhook`
+
 5. Transfer Money
     ```
     curl -X POST http://localhost:8000/wallet/transfer \
-  -H "Authorization: Bearer <jwt>" \
-  -d '{"wallet_number": "recipient-wallet-number", "amount": 2000}'
-  ```
+    -H "Authorization: Bearer <jwt>" \
+    -d '{"wallet_number": "recipient-wallet-number", "amount": 2000}'
+    ```
