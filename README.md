@@ -47,16 +47,16 @@ This project satisfies 100% of the original technical assessment requirements:
 
     WALLET_SERVICE_DB_URL="postgresql://username:password@hostname:port/db_name"
 
-    SECRET_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    ALGORITHM=xxxxx
+    SECRET_KEY=your_genereated_secret_key
+    ALGORITHM=hash_algorithm
 
     GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
     GOOGLE_CLIENT_SECRET=your-google-client-secret
     GOOGLE_CERTS_URL=https://www.googleapis.com/oauth2/v3/certs
     GOOGLE_REDIRECT_URI=site_domain/auth/google/callback
 
-    PAYSTACK_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxxxxxx
-    PAYSTACK_PUBLIC_KEY=pk_test_xxxxxxxxxxxxxxxxxxxxxxxx
+    PAYSTACK_SECRET_KEY=your_paystack_secret_key
+    PAYSTACK_PUBLIC_KEY=your_paystack_public_key
 
     ```
 3. Get Google and paystack credentials
