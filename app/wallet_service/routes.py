@@ -110,6 +110,8 @@ async def create_api_key(
         }
     """
     logger.info("current user is", current_user=user)
+    if not user:
+        raise HTTPException(status_code=400, detail="Unathorized requires jwt Auth")
     active_keys = db.query(APIKey).filter(APIKey.user_id == user.id, APIKey.revoked == False, APIKey.expires_at > datetime.utcnow()).count()
     if active_keys >= 5:
         raise HTTPException(status_code=400, detail="Max 5 active API keys")
@@ -130,6 +132,8 @@ async def rollover_api_key(
     Parameters:
         req (RolloverAPIKeyRequest): The request object containing the expired API key ID.
     """
+    if not user:
+        raise HTTPException(status_code=400, detail="Unathorized requires jwt Auth")
     old_key = db.query(APIKey).filter(APIKey.key == req.expired_key_id, APIKey.user_id == user.id).first()
     if not old_key or old_key.expires_at >= datetime.utcnow():
         raise HTTPException(status_code=400, detail="Key not expired or invalid")
