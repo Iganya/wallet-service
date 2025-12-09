@@ -8,8 +8,8 @@ from .config import config
 
 
 DB_URL = config.DB_URL
-if not DB_URL:
-    DB_URL = f"postgresql://{config.DB_USERNAME}:{config.DB_PASSWORD}@{config.DB_HOSTNAME}:{config.DB_PORT}/{config.DB_DATABASE}"
+# if not DB_URL:
+#     DB_URL = f"postgresql://{config.DB_USERNAME}:{config.DB_PASSWORD}@{config.DB_HOSTNAME}:{config.DB_PORT}/{config.DB_DATABASE}"
  
 engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

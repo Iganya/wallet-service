@@ -10,11 +10,11 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    DB_USERNAME: str = os.getenv("DB_USERNAME")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD")
-    DB_HOSTNAME: str = os.getenv("DB_HOSTNAME")
-    DB_PORT: str = os.getenv("DB_PORT")
-    DB_DATABASE: str = os.getenv("DB_DATABASE")
+    # DB_USERNAME: str = os.getenv("DB_USERNAME")
+    # DB_PASSWORD: str = os.getenv("DB_PASSWORD")
+    # DB_HOSTNAME: str = os.getenv("DB_HOSTNAME")
+    # DB_PORT: str = os.getenv("DB_PORT")
+    # DB_DATABASE: str = os.getenv("DB_DATABASE")
     DB_URL: str = os.getenv('WALLET_SERVICE_DB_URL')
 
     SECRET_KEY: str = os.getenv("SECRET_KEY")
