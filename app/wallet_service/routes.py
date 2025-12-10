@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.config import config, logger
 from app.core.db import get_db
 from .models import User, APIKey, Wallet, Transaction
-from .auth import creat_user_account, create_user_api_key, get_current_actor
+from .auth import creat_user_account, create_user_api_key, get_current_actor, get_current_user
 from .schemas import (CreateAPIKeyRequest, RolloverAPIKeyRequest, 
                       APIKeyResponse, DepositRequest, WalletPermission, 
                       TransactionStatus, TransactionType, TransferRequest,
@@ -73,15 +73,13 @@ async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
 @router.post("/keys/create", response_model=APIKeyResponse)
 async def create_api_key(
     req: CreateAPIKeyRequest, 
-    user: User = Depends(get_current_actor), 
+    user: User = Depends(get_current_user), 
     db: Session = Depends(get_db),
 ):
     """
     Create a new API key for the authenticated user.
     This endpoint allows users to generate a new API key for programmatic access.
     Users are limited to a maximum of 5 active (non-revoked, non-expired) API keys.
-    Args:
-        req (CreateAPIKeyRequest): Request object containing API key creation details.
     Returns:
         APIKeyResponse: The newly created API key with its details.
     Raises:
@@ -94,8 +92,6 @@ async def create_api_key(
         }
     """
     logger.info("current user is", current_user=user)
-    if not user or isinstance(user, tuple):
-        raise HTTPException(status_code=400, detail="Unathorized requires jwt Auth")
     active_keys = db.query(APIKey).filter(APIKey.user_id == user.id, APIKey.revoked == False, APIKey.expires_at > datetime.utcnow()).count()
     if active_keys >= 5:
         raise HTTPException(status_code=400, detail="Max 5 active API keys")
@@ -108,16 +104,12 @@ async def create_api_key(
 @router.post("/keys/rollover", response_model=APIKeyResponse)
 async def rollover_api_key(
     req: RolloverAPIKeyRequest, 
-    user: User = Depends(get_current_actor), 
+    user: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
     """Rollover an expired API key for a user.
     checks if the provided API key has expired and, if so, generates a new API key for the user. 
-    Parameters:
-        req (RolloverAPIKeyRequest): The request object containing the expired API key ID.
     """
-    if not user or isinstance(user, tuple):
-        raise HTTPException(status_code=400, detail="Unathorized requires jwt Auth")
     old_key = db.query(APIKey).filter(APIKey.key == req.expired_key_id, APIKey.user_id == user.id).first()
     if not old_key or old_key.expires_at >= datetime.utcnow():
         raise HTTPException(status_code=400, detail="Key not expired or invalid")
@@ -131,9 +123,7 @@ async def rollover_api_key(
 @router.post("/wallet/deposit")
 async def deposit(req: DepositRequest, db: Session = Depends(get_db), auth=Depends(get_current_actor)):
     """Initiate a deposit transaction for a user's wallet.
-    Handles wallet deposit requests by initializing a payment transaction with Paystack payment gateway.
-    Args:
-        req (DepositRequest): The deposit request containing the amount to deposit.        
+    Handles wallet deposit requests by initializing a payment transaction with Paystack payment gateway.   
     Returns:
         dict: A dictionary containing:
             - reference (str): Unique transaction reference ID for tracking.
@@ -232,7 +222,6 @@ async def transfer(req: TransferRequest, db: Session = Depends(get_db), auth=Dep
     Returns:
         dict: A dictionary with status and message indicating successful transfer completion.
     """
-
     if isinstance(auth, tuple):
         user, permissions = auth
         has_permission(permissions, WalletPermission.TRANSFER)
@@ -272,7 +261,7 @@ def get_transactions(db: Session = Depends(get_db), auth=Depends(get_current_act
         user = auth
     txns = db.query(Transaction).filter(Transaction.wallet_id == user.wallet.id).all()
     return [{"type": t.type, "amount": t.amount, "status": t.status} for t in txns]
-
+   
 
 
 @router.get("/wallet/balance")
@@ -292,35 +281,13 @@ def get_balance(db: Session = Depends(get_db), auth=Depends(get_current_actor)):
     else:
         user = auth
     return {"balance": user.wallet.balance}
-    
-
-
+   
 
 @router.get("/users")
 def get_all_users(db: Session = Depends(get_db)):
     """
     Retrieve all users with their associated wallet and API key information.
-    This function queries the database for all User records and eagerly loads
-    their related wallet and api_keys data using joinedload to optimize query.
-
-    Returns:
-        list[dict]: A list of dictionaries containing user information with the following structure:
-            - id (int): The user's unique identifier.
-            - email (str): The user's email address.
-            - full_name (str): The user's full name.
-            - wallet (dict): User's wallet information containing:
-                - id (int | None): The wallet's unique identifier, or None if no wallet exists.
-                - wallet (str | None): The wallet number, or None if no wallet exists.
-                - balance (float): The wallet's current balance, defaults to 0 if no wallet exists.
-            - api_keys (list[dict]): List of API keys associated with the user, each containing:
-                - id (int): The API key's unique identifier.
-                - key (str): The actual API key string.
-                - expires_at (datetime | None): The expiration timestamp of the API key.
-                - permissions (str | list): The permissions granted to this API key.
-    Raises:
-        SQLAlchemyError: If a database query error occurs.
     """
-
     users = (
         db.query(User)
         .options(

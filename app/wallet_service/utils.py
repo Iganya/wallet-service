@@ -3,7 +3,7 @@ from typing import List
 from fastapi import HTTPException
 from app.core.config import logger
 from .models import Transaction, Wallet
-from .schemas import TransactionType, TransactionStatus
+from .schemas import TransactionType, TransactionStatus, WalletPermission
 from .exception_handler import TransferError
 
 
@@ -11,7 +11,7 @@ from .exception_handler import TransferError
 class PermissionError(Exception):
     pass
 
-def has_permission(permissions: List[str], required: str):
+def has_permission(permissions: List[str], required: WalletPermission):
     """
     Check if a required permission exists in a list of api key permissions.
     Args:

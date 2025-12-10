@@ -84,6 +84,9 @@ def get_current_actor(
         HTTPException: If authentication fails or credentials are invalid/missing (status 401).
     """
     try:
+        logger.info("Getting current user")
+        if not jwt_credentials and not api_key:
+            raise HTTPException(status_code=401, detail="Missing authentication credentials")
         # Try JWT 
         if jwt_credentials:
             token = jwt_credentials.credentials
@@ -93,6 +96,7 @@ def get_current_actor(
                 
         # Try API Key
         if api_key:
+            logger.info("Validating API key")
             user, permissions = verify_api_key(api_key, db)
             if user:
                 return user, permissions
@@ -158,13 +162,45 @@ async def create_user_api_key(user_id, req, db, old_key=None) -> APIKeyResponse:
 
 
 def parse_expiry(expiry: str) -> datetime:
+    """Convert expiry time in format like 1H, 2H 3D to datetime object"""
     now = datetime.utcnow()
-    if expiry == "1H":
-        return now + timedelta(hours=1)
-    elif expiry == "1D":
-        return now + timedelta(days=1)
-    elif expiry == "1M":
-        return now + timedelta(days=30)
-    elif expiry == "1Y":
-        return now + timedelta(days=365)
+    expiry_length = int(expiry[0])  
+    expire_time = expiry[1].upper()
+
+    if expire_time == "H":
+        return now + timedelta(hours=1*expiry_length)
+    elif expire_time == "D":
+        return now + timedelta(days=1*expiry_length)
+    elif expire_time == "M":
+        return now + timedelta(days=30*expiry_length)
+    elif expire_time == "Y":
+        return now + timedelta(days=365*expiry_length)
+    
     raise ValueError("Invalid expiry")
+
+
+
+
+def get_current_user(
+    db: Session = Depends(get_db),
+    jwt_credentials: HTTPAuthorizationCredentials = Security(jwt_scheme),
+):
+    """
+    Retrieve the current JWT authenticated user from the request.
+    """
+    try:
+        logger.info("Getting current user")
+        if not jwt_credentials:
+            raise HTTPException(status_code=400, detail="Unathorized requires jwt Auth")
+        if jwt_credentials:
+            token = jwt_credentials.credentials
+            user = decode_google_token(token, db)
+            if user:
+                return user
+    except JWTExpiredSignatureError as jwt_error:
+        raise jwt_error
+    except HTTPException as auth_error:
+        raise auth_error
+    except Exception as e:
+        logger.info("Authentication Error", error=e)
+        raise HTTPException(status_code=401, detail="Invalid or missing authentication")
