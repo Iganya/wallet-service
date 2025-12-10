@@ -113,7 +113,7 @@ def get_current_actor(
 def get_user_with_user_id(user_id, db):
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
@@ -131,7 +131,7 @@ async def creat_user_account(userinfo, db):
 
             await create_user_wallet(db, user.id)
     except Exception as e:
-        raise AccountSetUpError(status_code=404, detail="Error creating user and wallet account")
+        raise AccountSetUpError(status_code=400, detail="Error creating user and wallet account")
 
 
 async def create_user_wallet(db, user_id):
@@ -191,7 +191,7 @@ def get_current_user(
     try:
         logger.info("Getting current user")
         if not jwt_credentials:
-            raise HTTPException(status_code=400, detail="Unathorized requires jwt Auth")
+            raise HTTPException(status_code=401, detail="Unathorized requires jwt Auth")
         if jwt_credentials:
             token = jwt_credentials.credentials
             user = decode_google_token(token, db)
