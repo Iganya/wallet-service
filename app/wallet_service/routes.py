@@ -40,17 +40,10 @@ oauth.register(
 
 @router.get("/auth/google")
 async def auth_google(request: Request):
-    """
-    Redirect user to Google OAuth2 authorization endpoint.
-    This async function initiates the Google OAuth2 authorization flow by redirecting
+    """Redirect user to Google OAuth2 authorization endpoint.
+    Initiates the Google OAuth2 authorization flow by redirecting
     the user to Google's authorization server. The user will be prompted to authenticate
     and grant permissions to the application.
-    Args:
-        request (Request): The incoming HTTP request object from Starlette/FastAPI.
-    Returns:
-        RedirectResponse: A redirect response to Google's OAuth2 authorization URL.
-    Raises:
-        OAuthError: If the OAuth configuration is invalid or the redirect fails.
     """
     return await oauth.google.authorize_redirect(request, config.GOOGLE_REDIRECT_URI)
 
@@ -61,15 +54,6 @@ async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
     Processes the Google OAuth callback, extracts user information
     from the OAuth token, creates a user account in the database if it doesn't exist,
     and returns a JWT token for authentication.
-    Args:
-        request (Request): The incoming HTTP request object containing OAuth callback data.
-    Returns:
-        dict: A dictionary containing the JWT token with key 'jwt_token'.
-            Example: {"jwt_token": "eyJhbGciOiJIUzI1NiIs..."}
-    Raises:
-        AccountSetUpError: If user account creation/setup fails and rollback database transaction
-        HTTPException: With status code 500 if any other error occurs during the
-            Google sign-in authentication process.
     """
     try:
         user_token = await oauth.google.authorize_access_token(request)
@@ -110,7 +94,7 @@ async def create_api_key(
         }
     """
     logger.info("current user is", current_user=user)
-    if not user:
+    if not user or isinstance(user, tuple):
         raise HTTPException(status_code=400, detail="Unathorized requires jwt Auth")
     active_keys = db.query(APIKey).filter(APIKey.user_id == user.id, APIKey.revoked == False, APIKey.expires_at > datetime.utcnow()).count()
     if active_keys >= 5:
@@ -132,7 +116,7 @@ async def rollover_api_key(
     Parameters:
         req (RolloverAPIKeyRequest): The request object containing the expired API key ID.
     """
-    if not user:
+    if not user or isinstance(user, tuple):
         raise HTTPException(status_code=400, detail="Unathorized requires jwt Auth")
     old_key = db.query(APIKey).filter(APIKey.key == req.expired_key_id, APIKey.user_id == user.id).first()
     if not old_key or old_key.expires_at >= datetime.utcnow():

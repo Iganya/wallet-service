@@ -21,7 +21,7 @@ class TransactionType(str, Enum):
 
 class CreateAPIKeyRequest(BaseModel):
     name: str
-    permissions: List[str]
+    permissions: List[WalletPermission]
     expiry: str  # "1H", "1D", "1M", "1Y"
 
 
