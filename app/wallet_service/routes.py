@@ -233,7 +233,7 @@ async def transfer(req: TransferRequest, db: Session = Depends(get_db), auth=Dep
     if not recipient_wallet:
         raise HTTPException(status_code=404, detail="Recipient not found")
     try:
-        await make_transfer(user, req, recipient_wallet, db)
+        await make_transfer(user, req.amount, recipient_wallet, db)
         return {"status": "success", "message": "Transfer completed"}
     except TransferError as transer_error:
         db.rollback() #
